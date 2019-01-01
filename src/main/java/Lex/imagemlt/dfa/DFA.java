@@ -417,6 +417,42 @@ public class DFA {
     public void print_brief(){
         System.out.printf("%d States,%d Edges\n",states.size(),edges.size());
     }
+
+    public String dump(){
+        String states="STATUS[] status={\n";
+        String stateIds="int[] stateIds={\n";
+        HashMap<State,Integer> idMap=new HashMap<>();
+        int i=0;
+        for(State state:this.states){
+            idMap.put(state,i);
+            i++;
+        }
+        for(i=0;i<this.states.size();i++){
+            states=states+"\tSTATUS."+this.states.get(i).getStatus().toString()+",\n";
+            stateIds=stateIds+"\t"+this.states.get(i).getId()+",\n";
+        }
+        states=states+"};\n";
+        stateIds=stateIds+"};\n";
+        String table="int[][] transitionTable={\n";
+        for(State state:this.states) {
+            table=table+"\t{";
+            for (int j = 0; j < 128; j++) {
+                State to=transitionTable.get(state).get((char)j);
+                if(to==null)table=table+"-1,";
+                else {
+
+                    table=table+idMap.get(to).toString()+",";
+                }
+            }
+            table=table+"},\n";
+        }
+        table=table+"};\n";
+        String start="int start=";
+        start=start+idMap.get(this.starts.get(0))+";\n";
+        return states+stateIds+table+start;
+
+    }
+
     public static void main(String args[]){
         //匹配规则
         String[] matchTable={"<ADD>","<SUB>","<MUL>","<DIV>","<LB>","<RB>","<ASSIGN>","<EQUAL>","<SEM>","<BEGIN>","<END>","<IF>","<ELSE>","<WHILE>","<TYPE,int>","<TYPE,float>","<ID,%s>","<DIGITS,%s>"};
@@ -426,7 +462,9 @@ public class DFA {
                       '(',')',',','=','+','-','*','/',';','{','}'
                 })
         );
-
+        for(int i=0;i<matchTable.length;i++){
+            System.out.printf("%s %s\n",matchTable[i],regExps[i]);
+        }
         NFA base_nfa=null;
         for(int i=0;i<matchTable.length;i++){
             NFA nfa=NFA.Reg2NFA(regExps[i]);
@@ -444,7 +482,7 @@ public class DFA {
         dfa.print_brief();
         System.out.println("化简后的dfa:");
         dfa.simplization();
-        dfa.print_brief();
+        dfa.print();
         System.out.println("=============dfa匹配测试============");
         State match=dfa.match("else");
         if(match!=null){
@@ -505,6 +543,10 @@ public class DFA {
             else begin=end+1;
 
         }
+        for(int i=0;i<matchTable.length;i++){
+            System.out.printf("%s %s\n",matchTable[i],regExps[i]);
+        }
+        System.out.println(dfa.dump());
     }
 
 }

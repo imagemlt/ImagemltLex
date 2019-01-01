@@ -22,80 +22,78 @@ public class CodeGenerator {
             "        NORMAL,\n" +
             "        BOTH\n" +
             "    };\n";
-    private static String funcScan="    public Vector<Integer> Scan(String example) throws Exception{\n" +
-            "        int begin=0,end=0;\n" +
-            "        Vector<Integer> ans=new Vector<>();\n" +
-            "        if(example.length()==0)return ans;\n" +
-            "        while(true){\n" +
-            "            String subPattern=\"\";\n" +
-            "            int state=-1;\n" +
+    private static String funcScan="   public Vector<Pair<Integer,String>> Scan(String example) throws Exception{\n" +
+            "       int begin=0,end=0;\n" +
+            "       Vector<Pair<Integer,String>> ans=new Vector<>();\n" +
+            "       if(example.length()==0)return ans;\n" +
+            "       while(true){\n" +
+            "           String subPattern=\"\";\n" +
+            "           int state=-1;\n" +
             "\n" +
-            "            if(symbols.contains(example.charAt(end))){\n" +
+            "           if(symbols.contains(example.charAt(begin))){\n" +
+            "               end=begin;\n" +
+            "               while(end<example.length()&&symbols.contains(example.charAt(end))) {\n" +
+            "                   end=end+1;\n" +
+            "                   subPattern=example.substring(begin,end);\n" +
+            "                   int cuState=match(subPattern);\n" +
+            "                   if(cuState!=-1){\n" +
+            "                       state=cuState;\n" +
+            "                   }\n" +
+            "                   else{\n" +
+            "                       end--;\n" +
+            "                       subPattern=subPattern.substring(0,subPattern.length()-1);\n" +
+            "                       break;\n" +
+            "                   }\n" +
+            "               }\n" +
+            "               if(state==-1)\n" +
+            "                   throw new Exception(\"invalid token '\"+subPattern+\"'\");\n" +
             "\n" +
-            "                while(end<example.length()&&symbols.contains(example.charAt(end))) {\n" +
-            "                    end=end+1;\n" +
-            "                    subPattern=example.substring(begin,end);\n" +
-            "                    int cuState=match(subPattern);\n" +
-            "                    if(cuState!=-1){\n" +
-            "                        state=cuState;\n" +
-            "                    }\n" +
-            "                    else{\n" +
-            "                        end--;\n" +
-            "                        subPattern=subPattern.substring(0,subPattern.length()-1);\n" +
-            "                        break;\n" +
-            "                    }\n" +
-            "                }\n" +
-            "                if(state==-1)\n" +
-            "                    throw new Exception(\"invalid token '\"+subPattern+\"'\");\n" +
+            "           }\n" +
+            "           else if(begin<example.length() && example.charAt(begin)==' '){\n" +
+            "               while(begin<example.length() && example.charAt(begin)==' ')begin++;\n" +
+            "               if(begin==example.length())break;\n" +
+            "               end=begin-1;\n" +
+            "               continue;\n" +
+            "           }\n" +
+            "           else {\n" +
+            "               for (end = begin; end < example.length() && example.charAt(end) != ' ' && !symbols.contains(example.charAt(end)); end++);\n" +
+            "               subPattern=example.substring(begin,end);\n" +
+            "               state=match(subPattern);\n" +
+            "               if(state==-1)\n" +
+            "                   throw new Exception(\"invalid token '\"+subPattern+\"'\");\n" +
+            "           }\n" +
+            "           if(state!=-1) {\n" +
+            "               ans.add(new Pair<Integer, String>(state,subPattern));\n" +
+            "               if (debug)\n" +
+            "                   System.out.printf(matchTable[stateIds[state]] + \"\\t%s\\n\", subPattern, subPattern);\n" +
+            "           }\n" +
+            "           if(end==example.length()){\n" +
+            "               break;\n" +
+            "           }\n" +
+            "           if(symbols.contains(example.charAt(end)) ||symbols.contains(example.charAt(begin)))begin=end;\n" +
+            "           else begin=end+1;\n" +
             "\n" +
-            "            }\n" +
-            "            else {\n" +
-            "                for (end = begin; end < example.length() && example.charAt(end) != ' ' && !symbols.contains(example.charAt(end)); end++)\n" +
-            "                    ;\n" +
-            "                if(end==begin){\n" +
-            "                    end++;\n" +
-            "                    while(end<example.length() && example.charAt(begin)==' ') {\n" +
-            "                        begin++;\n" +
-            "                        end++;\n" +
-            "                    }\n" +
-            "                }\n" +
-            "                subPattern=example.substring(begin,end);\n" +
-            "\n" +
-            "                state=match(subPattern);\n" +
-            "                if(state==-1)\n" +
-            "                    throw new Exception(\"invalid token '\"+subPattern+\"'\");\n" +
-            "\n" +
-            "            }\n" +
-            "            if(state!=-1) {\n" +
-            "                ans.add(state);\n" +
-            "                if (debug)\n" +
-            "                    System.out.printf(matchTable[stateIds[state]] + \"\\t%s\\n\", subPattern, subPattern);\n" +
-            "            }\n" +
-            "            if(end==example.length()){\n" +
-            "                break;\n" +
-            "            }\n" +
-            "            if(symbols.contains(example.charAt(end)) ||symbols.contains(example.charAt(begin)))begin=end;\n" +
-            "            else begin=end+1;\n" +
-            "\n" +
-            "        }\n" +
-            "        return ans;\n" +
+            "       }\n" +
+            "       return ans;\n" +
             "    }\n" +
             "\n" +
-            "    public Vector<Integer> Scan(Reader reader) throws Exception{\n" +
+            "\n" +
+            "\n" +
+            "    public Vector<Pair<Integer,String>> Scan(Reader reader) throws Exception{\n" +
             "        BufferedReader bufferedReader=new BufferedReader(reader);\n" +
-            "        Vector<Integer>ans=new Vector<>();\n" +
+            "        Vector<Pair<Integer,String>>ans=new Vector<>();\n" +
             "        String line=null;\n" +
             "        while((line=bufferedReader.readLine())!=null){\n" +
-            "            Vector<Integer> tmp=Scan(line);\n" +
+            "            Vector<Pair<Integer,String>> tmp=Scan(line);\n" +
             "            ans.addAll(tmp);\n" +
             "        }\n" +
             "        return ans;\n" +
             "    }\n" +
             "\n" +
-            "    public Vector<Integer> Scan(InputStream stream) throws Exception{\n" +
+            "    public Vector<Pair<Integer,String>> Scan(InputStream stream) throws Exception{\n" +
             "        return Scan(new InputStreamReader(stream));\n" +
             "    }\n";
-    private static String funcMatch="    private int match(String input){\n" +
+    private static String funcMatch="private int match(String input){\n" +
             "        Pair<Integer,Integer> tmp;\n" +
             "        boolean end=false;\n" +
             "        Integer matchState=-1;\n" +
@@ -127,7 +125,7 @@ public class CodeGenerator {
             "\n" +
             "        }\n" +
             "        return matchState;\n" +
-            "    }";
+            "    }\n";
     private static String constructor="private boolean debug=false;\n" +
             "    public Scanner(boolean debug) {\n" +
             "        this.debug=debug;\n" +

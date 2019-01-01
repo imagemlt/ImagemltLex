@@ -3,15 +3,10 @@ package Lex.imagemlt.dfa;
 import Lex.imagemlt.nfa.Edge;
 import Lex.imagemlt.nfa.NFA;
 import Lex.imagemlt.nfa.State;
-import apple.laf.JRSUIConstants;
-import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
+
 import javafx.util.Pair;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.Buffer;
+
 import java.util.*;
 
 public class DFA {

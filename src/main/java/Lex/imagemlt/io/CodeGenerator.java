@@ -19,6 +19,8 @@ public class CodeGenerator {
                 "import java.util.Arrays;\n" +
                 "import java.util.HashSet;\n" +
                 "import java.util.Stack;\n" +
+                "import java.io.BufferedWriter;\n" +
+                "import java.io.FileWriter;\n" +
                 "\n" +
                 "public class Scanner {\n" +
                 "    public enum STATUS {\n" +

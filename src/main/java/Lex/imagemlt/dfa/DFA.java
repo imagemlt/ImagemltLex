@@ -543,10 +543,8 @@ public class DFA {
             else begin=end+1;
 
         }
-        for(int i=0;i<matchTable.length;i++){
-            System.out.printf("%s %s\n",matchTable[i],regExps[i]);
-        }
-        System.out.println(dfa.dump());
+
+        //System.out.println(dfa.dump());
     }
 
 }

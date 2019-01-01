@@ -6,6 +6,7 @@ import Lex.imagemlt.io.LexFile;
 import Lex.imagemlt.nfa.NFA;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.util.Vector;
 
@@ -18,7 +19,7 @@ public class App
     public static void main( String[] args )
     {
         try {
-            LexFile lexFile = new LexFile(args[1]);
+            LexFile lexFile = new LexFile(args[0]);
             Vector<String> matchTable=lexFile.getMatchTable();
             Vector<String> regExps=lexFile.getRegExps();
             for (int i = 0; i < matchTable.size(); i++) {
@@ -39,7 +40,11 @@ public class App
             dfa.print();
             CodeGenerator generator=new CodeGenerator(lexFile,dfa);
             String result=generator.genCode();
-            BufferedWriter writer=new BufferedWriter(new FileWriter(args[2]));
+            File output=new File(args[1]);
+            if(!output.exists()){
+                output.createNewFile();
+            }
+            BufferedWriter writer=new BufferedWriter(new FileWriter(output));
             writer.write(result);
             writer.flush();
             writer.close();

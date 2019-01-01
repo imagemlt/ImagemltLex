@@ -419,8 +419,8 @@ public class DFA {
     }
     public static void main(String args[]){
         //匹配规则
-        String[] matchTable={"<ADD>","<SUB>","<MUL>","<DIV>","<LB>","<RB>","<ASSIGN>","<EQUAL>","<SEM>","<BEGIN>","<END>","<IF>","<ELSE>","<WHILE>","<ID,%s>","<DIGITS,%s>"};
-        String[] regExps={"+","-","\\*","/","\\(","\\)","=","==",";","{","}","if","else","while","[a-z][a-z0-9]*","\\d\\d*"};
+        String[] matchTable={"<ADD>","<SUB>","<MUL>","<DIV>","<LB>","<RB>","<ASSIGN>","<EQUAL>","<SEM>","<BEGIN>","<END>","<IF>","<ELSE>","<WHILE>","<TYPE,int>","<TYPE,float>","<ID,%s>","<DIGITS,%s>"};
+        String[] regExps={"+","-","\\*","/","\\(","\\)","=","==",";","{","}","if","else","while","int","float","[a-z][a-z0-9]*","\\d\\d*"};
         HashSet<Character> symbols=new HashSet<>(
                 Arrays.asList(new Character[]{
                       '(',')',',','=','+','-','*','/',';','{','}'

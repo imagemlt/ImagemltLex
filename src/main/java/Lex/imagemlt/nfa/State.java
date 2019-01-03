@@ -53,6 +53,7 @@ public class State {
     }
     public State(State state){
         this.status=state.status;
+        this.id=state.id;
         this.edges=new Vector<Edge>();
     }
     public void setStatus(STATUS status){

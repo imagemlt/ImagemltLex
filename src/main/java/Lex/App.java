@@ -37,6 +37,7 @@ public class App
             }
             DFA dfa = new DFA(base_nfa);
             dfa.simplization();
+            System.gc();
             dfa.print();
             CodeGenerator generator=new CodeGenerator(lexFile,dfa);
             String result=generator.genCode();

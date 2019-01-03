@@ -73,45 +73,28 @@ public class NFA {
 
     }
     public NFA(NFA nfa){
-        this.states=new Vector<State>();
-        this.edges=new Vector<Edge>();
-       Stack<State> copyStack=new Stack<State>();
-       Stack<State> myStack=new Stack<State>();
-       copyStack.push(nfa.beginState);
-       State tmp,cursor;
-       this.beginState=new State(nfa.beginState);
-       myStack.push(this.beginState);
-       while(!copyStack.empty()){
-           tmp=copyStack.pop();
-           cursor=myStack.pop();
-
-           for(Edge edge:tmp.getEdges()){
-               Edge e=new Edge();
-                e.setEdge(edge.getEdge());
-                e.setEdegeFrom(cursor);
-                State stateTo=edge.getEdegeTo();
-                if(stateTo.getVisted()){
-                    e.setEdegeTo(stateTo.getCopyState());
-                }
-                else{
-                    State copyState=new State(stateTo);
-                    stateTo.setVisited(true);
-                    stateTo.setCopyState(copyState);
-                    e.setEdegeTo(copyState);
-                    copyStack.push(stateTo);
-                    myStack.push(copyState);
-                    if(stateTo==nfa.endState){
-                        this.endState=copyState;
-                    }
-                }
-                cursor.getEdges().add(e);
-                this.edges.add(e);
-           }
-           this.states.add(cursor);
+       HashMap<State,Integer> map=new HashMap<>();
+       this.states=new Vector<State>();
+       this.edges=new Vector<Edge>();
+       int i=0;
+       for(State state:nfa.getStates()){
+           State tmp=new State();
+           tmp.setId(state.getId());
+           tmp.setStatus(state.getStatus());
+           map.put(state,i);
+           this.states.add(tmp);
+           i++;
        }
-       for(State state:nfa.states){
-           state.setVisited(false);
+       for(Edge edge:nfa.getEdges()){
+           Edge tmp=new Edge(this.states.get(map.get(edge.getEdegeFrom())),this.states.get(map.get(edge.getEdegeTo())));
+           if(edge.getCharacter()!=null)
+           tmp.setCharacter(edge.getCharacter());
+           tmp.setEdge(edge.getEdge());
+           this.states.get(map.get(edge.getEdegeFrom())).getEdges().add(tmp);
+           this.edges.add(tmp);
        }
+       this.beginState=this.states.get(map.get(nfa.beginState));
+       this.endState=this.states.get(map.get(nfa.endState));
 
     }
 
@@ -166,6 +149,9 @@ public class NFA {
 
                     }
                     case '*':{
+
+                    }
+                    case '+':{
 
                     }
 
@@ -234,6 +220,7 @@ public class NFA {
                         edge.setCharacter(basechar);
                         beginState.getEdges().add(edge);
                         NFA nfa = new NFA(beginState, endState);
+                        nfa.edges.add(edge);
                         join_nfas.add(nfa);
                     }
                     NFA nfa=join_nfas.get(0);
@@ -337,6 +324,16 @@ public class NFA {
                         basenfas.add(nfa);
                         break;
                     }
+                    case '+':{
+                        NFA nfa=basenfas.get(basenfas.size()-1);
+                        basenfas.remove(nfa);
+                        NFA nfa2=new NFA(nfa);
+                        nfa.star();
+                        nfa2.cat(nfa);
+
+                        basenfas.add(nfa2);
+                        break;
+                    }
                     default: {
                         State beginState = new State();
                         State endState = new State();
@@ -365,12 +362,12 @@ public class NFA {
             //basenfas.get(j).print();
             nfa.cat(basenfas.get(j));
         }
+        System.gc();
         return nfa;
 
     }
     // ab
-    public void cat(NFA nfa){
-        NFA nfa2=(nfa);
+    public void cat(NFA nfa2){
         Edge edge=new Edge(this.endState,nfa2.beginState);
         edge.setEdge(Edge.EPSILON);
         this.endState.getEdges().add(edge);
@@ -387,10 +384,9 @@ public class NFA {
         }
     }
 
-    public void keepEnd_or(NFA nfa){
+    public void keepEnd_or(NFA nfa2){
         State newBeginState=new State();
         State newEndState=new State();
-        NFA nfa2=(nfa);
         nfa2.beginState.setStatus(State.STATUS.NORMAL);
         //nfa2.endState.setStatus(State.STATUS.NORMAL);
         Edge startEpsilon1=new Edge(newBeginState,this.beginState);
@@ -424,10 +420,9 @@ public class NFA {
 
     }
     // a|b
-    public void or(NFA nfa){
+    public void or(NFA nfa2){
         State newBeginState=new State();
         State newEndState=new State();
-        NFA nfa2=(nfa);
         nfa2.beginState.setStatus(State.STATUS.NORMAL);
         nfa2.endState.setStatus(State.STATUS.NORMAL);
         Edge startEpsilon1=new Edge(newBeginState,this.beginState);
@@ -486,6 +481,9 @@ public class NFA {
         this.rebuild(newBeginState,newEndState);
     }
 
+    public void print_brief(){
+        System.out.printf("%d States,%d Edges\n",states.size(),edges.size());
+    }
 
     public void rebuild(State beginState,State endState) {
         this.beginState.setStatus(State.STATUS.NORMAL);
@@ -550,9 +548,8 @@ public class NFA {
         }
     }
     public static void main(String args[]){
-        NFA nfa=NFA.Reg2NFA("ab");
+        NFA nfa=NFA.Reg2NFA("[ab]+");
         nfa.rename();
-        nfa.print();
-        //nfa.listStates();
+        //nfa.print();
     }
 }

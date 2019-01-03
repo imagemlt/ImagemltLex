@@ -4,9 +4,13 @@ import Lex.imagemlt.nfa.Edge;
 import Lex.imagemlt.nfa.NFA;
 import Lex.imagemlt.nfa.State;
 
+import com.sun.tools.jdi.EventSetImpl;
 import javafx.util.Pair;
 
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 public class DFA {
@@ -15,16 +19,23 @@ public class DFA {
     public HashMap<State,HashMap<Character,State>> transitionTable;
     public Vector<State> starts;
     public Vector<State> ends;
+    private HashMap<State,HashSet<State>> baseClosureMap;
+    private HashMap<HashSet<State>,HashMap<Character,HashSet<State>>> tranClosureMap;
+    private HashMap<HashSet<State>,HashMap<State,HashSet<State>>> tranDp;
 
     public DFA(NFA nfa){
         states=new Vector<>();
         edges=new Vector<>();
         starts=new Vector<>();
         ends=new Vector<>();
+        baseClosureMap=new HashMap<>();
+        tranClosureMap=new HashMap<>();
         transitionTable=new HashMap<>();
+        tranDp=new HashMap<>();
         HashMap<HashSet<State>, HashMap<Character,HashSet<State>>>TransitionTable=getTransitionTable(nfa);
         Iterator iter = TransitionTable.entrySet().iterator();
-        Vector<HashSet<State>>vect=new Vector<>();
+        HashMap<HashSet<State>,Integer> keyMap=new HashMap<>();
+        int i=0;
         while (iter.hasNext()) {
             Map.Entry entry = (Map.Entry) iter.next();
             HashSet<State> key = (HashSet<State>)entry.getKey();
@@ -42,10 +53,11 @@ public class DFA {
 
             //state.setId(states.size());
             states.add(state);
-            vect.add(key);
+            keyMap.put(key,i);
+            i++;
         }
         iter=TransitionTable.entrySet().iterator();
-        int i=0;
+        i=0;
         while(iter.hasNext()){
             Map.Entry entry = (Map.Entry) iter.next();
             HashMap<Character,HashSet<State>> map=(HashMap<Character,HashSet<State>>)entry.getValue();
@@ -54,7 +66,7 @@ public class DFA {
             while(it.hasNext()){
                 Map.Entry en=(Map.Entry)it.next();
                 HashSet<State> val=(HashSet<State>) en.getValue();
-                Edge edge=new Edge(states.get(i),states.get(vect.indexOf(val)));
+                Edge edge=new Edge(states.get(i),states.get(keyMap.get(val)));
 
                 edge.setCharacter((Character)en.getKey());
                 transTable.put((Character)en.getKey(),edge.getEdegeTo());
@@ -64,8 +76,6 @@ public class DFA {
             transitionTable.put(states.get(i),transTable);
             i++;
         }
-
-
     }
 
     public int getId(HashSet<State>set){
@@ -166,17 +176,19 @@ public class DFA {
         HashMap<State,HashMap<Character,State>> newTransitionTable=new HashMap<>();
         Vector<State> newStates=new Vector<>();
         Vector<Edge> edges=new Vector<>();
-        Vector<HashSet<State>> hashSet=new Vector<>();
+        HashMap<HashSet<State>,Integer> hashSet=new HashMap<>();
         this.starts.clear();
         this.ends.clear();
-        for(HashSet<State>set:tmp){
-           State state=set.iterator().next();
-           state.setStatus(getStatus(set));
-           state.setId(getId(set));
-           newStates.add(state);
-           hashSet.add(set);
-        }
         int i=0;
+        for(HashSet<State>set:tmp){
+            State state=set.iterator().next();
+            state.setStatus(getStatus(set));
+            state.setId(getId(set));
+            newStates.add(state);
+            hashSet.put(set,i);
+            i++;
+        }
+        i=0;
         for(State state:newStates){
             state.getEdges().clear();
             Iterator it=transitionTable.get(state).entrySet().iterator();
@@ -184,7 +196,7 @@ public class DFA {
             while(it.hasNext()){
                 Map.Entry entry=(Map.Entry)it.next();
                 HashSet<State> moved=move(state,(Character)entry.getKey(),tmp);
-                int index=hashSet.indexOf(moved);
+                int index=hashSet.get(moved);
                 State to=newStates.get(index);
                 newTransitionTable.get(state).put((Character)entry.getKey(),to);
                 Edge edge=new Edge(state,to);
@@ -265,6 +277,8 @@ public class DFA {
 
 
     public HashSet<State> getClosure(State state){
+        HashSet set=baseClosureMap.get(state);
+        if(set!=null)return set;
         HashSet<State> ans=new HashSet<>();
         Stack<State> stateStack=new Stack<>();
         stateStack.push(state);
@@ -286,9 +300,17 @@ public class DFA {
                 }
             }
         }
+        baseClosureMap.put(state,ans);
         return ans;
     }
     public HashSet<State> getTransClosure(HashSet<State> state,Character character){
+        HashMap<Character,HashSet<State>>  ItranClosureMap=tranClosureMap.get(state);
+        if(ItranClosureMap!=null){
+            HashSet<State> tranClosure= ItranClosureMap.get(character);
+            if(tranClosure!=null){
+                return tranClosure;
+            }
+        }
         HashSet<State> ans=new HashSet<>();
         HashSet<State> result=new HashSet<>();
         Stack<State> stateStack=new Stack<>();
@@ -306,9 +328,25 @@ public class DFA {
             }
         }
         for(State tmp:ans){
-            result.addAll(getClosure(tmp));
+            if(tranDp.get(result)!=null && tranDp.get(result).get(tmp)!=null) {
+                result=tranDp.get(result).get(tmp);
+            }
+            else {
+                if (tranDp.get(result) == null) {
+                    tranDp.put(result, new HashMap<State, HashSet<State>>());
+                }
+                HashSet<State> tmpSet = new HashSet<>();
+                tmpSet.addAll(result);
+                tmpSet.addAll(getClosure(tmp));
+                tranDp.get(result).put(tmp, tmpSet);
+                result = tmpSet;
+            }
         }
-
+        if(ItranClosureMap==null){
+            ItranClosureMap=new HashMap<>();
+            tranClosureMap.put(state,ItranClosureMap);
+        }
+        ItranClosureMap.put(character,result);
         return result;
     }
 
@@ -334,8 +372,6 @@ public class DFA {
                 }
             }
         }
-
-
         return ans;
     }
 
@@ -398,14 +434,14 @@ public class DFA {
                         //System.out.println("visited");
                         edge.getEdegeTo().setVisited(true);
                         if(edge.getEdegeTo()!=tmp)
-                        copyStates.push(edge.getEdegeTo());
+                            copyStates.push(edge.getEdegeTo());
                     }
                 }
             }
         }
-            for (State state : this.states) {
-                state.setVisited(false);
-            }
+        for (State state : this.states) {
+            state.setVisited(false);
+        }
 
     }
 
@@ -449,12 +485,41 @@ public class DFA {
     }
 
     public static void main(String args[]){
+        //正则引擎测试
+        String emailPattern="[a-zA-Z0-9]+(.[a-zA-Z0-9]+)*@[a-zA-Z0-9]+(.[a-zA-Z0-9]+)+";
+        NFA emailNFA=NFA.Reg2NFA(emailPattern);
+        System.out.println("根据正则表达式生成的NFA:");
+        emailNFA.print_brief();
+        DFA emailDFA=new DFA(emailNFA);
+        System.gc();
+        System.out.println("简化前的DFA:");
+        emailDFA.print_brief();
+        System.out.println("简化后的DFA");
+        emailDFA.simplization();
+        System.gc();
+        emailDFA.print_brief();
+        BufferedReader reader=new BufferedReader(new InputStreamReader(System.in));
+
+        try {
+            String input;
+            System.out.print("输入一段文字，判断是否为一个email,空表示结束:");
+            while((input=reader.readLine())!=null) {
+                State match = emailDFA.match(input);
+                if (match != null) System.out.printf("'%s' 是一个合格的email；\n", input);
+                else System.out.println("输入不是一个合格的email");
+                System.out.print("输入一段文字，判断是否为一个email:");
+            }
+        }
+        catch(Exception e){
+            //e.printStackTrace();
+        }
+
         //匹配规则
         String[] matchTable={"<ADD>","<SUB>","<MUL>","<DIV>","<LB>","<RB>","<ASSIGN>","<EQUAL>","<SEM>","<BEGIN>","<END>","<IF>","<ELSE>","<WHILE>","<TYPE,int>","<TYPE,float>","<ID,%s>","<DIGITS,%s>"};
-        String[] regExps={"+","-","\\*","/","\\(","\\)","=","==",";","{","}","if","else","while","int","float","[a-z][a-z0-9]*","\\d\\d*"};
+        String[] regExps={"\\+","-","\\*","/","\\(","\\)","=","==",";","{","}","if","else","while","int","float","[a-z][a-z0-9]*","\\d\\d*"};
         HashSet<Character> symbols=new HashSet<>(
                 Arrays.asList(new Character[]{
-                      '(',')',',','=','+','-','*','/',';','{','}'
+                        '(',')',',','=','+','-','*','/',';','{','}'
                 })
         );
         for(int i=0;i<matchTable.length;i++){

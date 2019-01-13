@@ -47,14 +47,14 @@ public class CodeGenerator {
             "                   throw new Exception(\"invalid token '\"+subPattern+\"'\");\n" +
             "\n" +
             "           }\n" +
-            "           else if(begin<example.length() && example.charAt(begin)==' '){\n" +
-            "               while(begin<example.length() && example.charAt(begin)==' ')begin++;\n" +
+            "           else if(begin<example.length() && (example.charAt(begin)==' ' || example.charAt(begin)=='\\t')){\n" +
+            "               while(begin<example.length() && (example.charAt(begin)==' ' || example.charAt(begin)=='\\t'))begin++;\n" +
             "               if(begin==example.length())break;\n" +
             "               end=begin-1;\n" +
             "               continue;\n" +
             "           }\n" +
             "           else {\n" +
-            "               for (end = begin; end < example.length() && example.charAt(end) != ' ' && !symbols.contains(example.charAt(end)); end++);\n" +
+            "               for (end = begin; end < example.length() && (example.charAt(end) != ' ' || example.charAt(begin)=='\\t') && !symbols.contains(example.charAt(end)); end++);\n" +
             "               subPattern=example.substring(begin,end);\n" +
             "               state=match(subPattern);\n" +
             "               if(state==-1)\n" +

@@ -112,7 +112,6 @@ public class NFA {
         boolean squareBlurState=false;
         while(true){
             char c=regExp.charAt(i);
-            //System.out.printf("%d,%c\n",i,c);
             if(slashState){
                 switch(c){
                     case 'd':{
@@ -241,7 +240,6 @@ public class NFA {
                         break;
                     }
                     case ']': {
-                        System.out.println("jump out of squareBlurState!!");
                         squareBlurState=false;
                         break;
                     }
@@ -262,12 +260,16 @@ public class NFA {
                         }
 
                         int lastkey = -1;
+                        Vector<NFA> xor_nfas = new Vector<NFA>();
                         if (!xor_stack.empty()) {
 
-                            Vector<NFA> xor_nfas = new Vector<NFA>();
+
                             while (!xor_stack.empty()) {
                                 Pair<Integer, Integer> xor_pos = xor_stack.pop();
-                                if (xor_pos.getValue() != blur_level) break;
+                                if (xor_pos.getValue() != blur_level) {
+                                    xor_stack.push(xor_pos);
+                                    break;
+                                }
                                 int key = xor_pos.getKey();
                                 NFA nfa = basenfas.get(key);
                                 basenfas.remove(key);
@@ -279,10 +281,12 @@ public class NFA {
                                 xor_nfas.add(nfa);
                             }
 
-                            if (xor_nfas.size() <= 0) {
+                            /*if (xor_nfas.size() <= 0) {
                                 System.out.println("Invalid regexp:|");
                                 return null;
-                            }
+                            }*/
+                        }
+                        if(lastkey!=-1){
                             int blur_pos = blur_stack.pop();
                             NFA nfa = basenfas.get(blur_pos);
                             basenfas.remove(blur_pos);
